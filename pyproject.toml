@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thingslocal-bridge"
+version = "0.2.0"
+description = "Local STDK MQTT monitoring, dishwasher notifications and optional program selection"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "UPSTREAM.md"]
+authors = [{name = "purplesym (Lars) and LocalThings contributors — original LocalThings"}]
+maintainers = [{name = "jmguzik — ThingsLocal Bridge continuation"}]
+dependencies = ["paho-mqtt==2.1.0", "structlog==26.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/jmguzik/thingslocal-bridge"
+Repository = "https://github.com/jmguzik/thingslocal-bridge"
+Issues = "https://github.com/jmguzik/thingslocal-bridge/issues"
+Upstream = "https://codeberg.org/purplesym/localthings"
+
+[project.optional-dependencies]
+setup = ["pycryptodome==3.23.0"]
+
+[project.scripts]
+thingslocal = "thingslocal.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["thingslocal_bridge/src"]
+
+[tool.setuptools.package-data]
+thingslocal = ["data/*.pem", "data/*.cjs"]

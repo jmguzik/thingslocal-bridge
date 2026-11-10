@@ -1,0 +1,6 @@
+**/__pycache__
+**/*.pyc
+.private
+node_modules
+*.key
+config.json

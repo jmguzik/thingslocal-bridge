@@ -1,0 +1,88 @@
+blueprint:
+  name: ThingsLocal dishwasher notifications
+  description: >-
+    Send local dishwasher attention and cleaning reports to the HA panel and
+    optional notify services. A retained MQTT acknowledgement prevents ordinary
+    replay after reconnection. No appliance commands are sent.
+  domain: automation
+  input:
+    notification_event:
+      name: Notification event sensor
+      selector:
+        entity:
+          domain: sensor
+    acknowledgement:
+      name: Notification acknowledgement sensor
+      selector:
+        entity:
+          domain: sensor
+    acknowledgement_topic:
+      name: MQTT acknowledgement topic
+      description: thingslocal/DEVICE_IDENTIFIER/notification_ack
+      selector:
+        text:
+    title:
+      name: Notification title
+      default: Dishwasher
+      selector:
+        text:
+    notify_services:
+      name: Additional notify services
+      description: A YAML list, for example [notify.mobile_app_your_phone]. The HA panel is always included.
+      default: []
+      selector:
+        object:
+    notification_id:
+      name: Persistent panel notification ID
+      description: Use a different ID for each appliance.
+      default: thingslocal_dishwasher_attention
+      selector:
+        text:
+mode: queued
+max: 10
+triggers:
+  - trigger: state
+    entity_id: !input notification_event
+  - trigger: homeassistant
+    event: start
+variables:
+  event_entity: !input notification_event
+  ack_entity: !input acknowledgement
+  phone_services: !input notify_services
+actions:
+  - delay:
+      seconds: 1
+  - wait_template: "{{ states(ack_entity) not in ['unknown', 'unavailable', ''] }}"
+    timeout:
+      seconds: 30
+    continue_on_timeout: false
+  - variables:
+      event_id: "{{ states(event_entity) }}"
+      body: "{{ state_attr(event_entity, 'message') | default('', true) }}"
+      created: "{{ state_attr(event_entity, 'created') | default('', true) }}"
+  - condition: template
+    value_template: >-
+      {{ event_id not in ['unknown', 'unavailable', 'none', '']
+         and body | length > 0 and event_id != states(ack_entity) }}
+  - action: persistent_notification.create
+    data:
+      title: !input title
+      message: "{{ body }}\n\n{{ created }}"
+      notification_id: !input notification_id
+  - repeat:
+      for_each: "{{ phone_services }}"
+      sequence:
+        - action: "{{ repeat.item }}"
+          data:
+            title: !input title
+            message: "{{ body }}"
+  - action: mqtt.publish
+    data:
+      topic: !input acknowledgement_topic
+      payload: "{{ event_id }}"
+      qos: 1
+      retain: true
+  - wait_template: "{{ states(ack_entity) == event_id }}"
+    timeout:
+      seconds: 5
+    continue_on_timeout: false

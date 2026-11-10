@@ -1,0 +1,19 @@
+name: ThingsLocal Bridge
+version: "0.2.0"
+slug: thingslocal_bridge
+url: https://github.com/jmguzik/thingslocal-bridge
+description: Local STDK monitoring, dishwasher notifications and optional program selection.
+arch: [amd64, aarch64]
+startup: services
+boot: auto
+init: false
+host_network: true
+map:
+  - share:rw
+watchdog: tcp://[HOST]:8883
+services:
+  - mqtt:want
+options:
+  workspace: /share/thingslocal
+schema:
+  workspace: str
